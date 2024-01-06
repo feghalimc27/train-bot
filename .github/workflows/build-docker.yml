@@ -37,12 +37,19 @@ jobs:
         password: '${{ steps.auth.outputs.access_token }}'
         registry: '${{ env.GAR_LOCATION }}-docker.pkg.dev'
 
-    # TODO: Add .env file
     - name: Create .env file
       run: |-
+        touch .env
+
+        echo APP_ID=${{ secrets.ENV_APP_ID }} >> .env
+        echo DISCORD_TOKEN=${{ secrets.ENV_DISCORD_TOKEN }} >> .env
+        echo PUBLIC_KEY=${{ secrets.ENV_DISCORD_PUBLIC_KEY }} >> .env
+        echo COUNTING_CHANNEL_ID=${{ secrets.ENV_COUNTING_CHANNEL_ID }} >> .env
+        echo GUILD_ID=${{ secrets.ENV_GUILD_ID }} >> .env
+
         ls -la .
 
     - name: Build and push the Docker image
       run: |-
-        docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}" ./
-        docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}"
+        docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/${{ env.SERVICE }}" .
+        docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/${{ env.SERVICE }}"

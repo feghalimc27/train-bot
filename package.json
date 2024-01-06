@@ -1,0 +1,25 @@
+{
+  "name": "train-bot",
+  "version": "1.0.0",
+  "description": "A bot for 'anti train train weeb' for train things",
+  "main": "index.mjs",
+  "files": [
+    "/index.mjs",
+    "/utils.mjs",
+    "/commands.mjs",
+    "/deploy-commands.mjs",
+    "/.env",
+    "/commands"
+  ],
+  "scripts": {
+    "test": "test",
+    "start": "node .",
+    "register": "node deploy-commands.mjs"
+  },
+  "author": "Mario Feghali",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.3.1"
+  }
+}

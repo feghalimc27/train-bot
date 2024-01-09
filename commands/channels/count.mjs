@@ -1,5 +1,8 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import { getAllMessages } from '../../utils.mjs';
+import * as fs from 'fs/promises';
+
+const leaderboardFileLocation = './leaderboard.json';
 
 export const command = {
     data: new SlashCommandBuilder()
@@ -21,8 +24,17 @@ export const command = {
 }
 
 const getLeaderboard = async function(client) {
-    let messages = await getAllMessages(client);
+    let existingData = await getLastLeaderboardAndMessage();
     let leaderboard = [];
+    let messages = [];
+
+    // Get existing data if possible
+    if (existingData) {
+        leaderboard = existingData.leaderboard;
+        messages = await getAllMessages(client, existingData.lastMessage);
+    } else {
+        messages = await getAllMessages(client);
+    }
 
     for (let message of messages) {
         if (!leaderboard.find(element => element.id == message.author.id)) {
@@ -38,6 +50,17 @@ const getLeaderboard = async function(client) {
     }
 
     leaderboard.sort((a, b) => (a.value <= b.value) ? 1 : -1);
+
+    let lastMessageId = 0;
+
+    if (messages.length > 0) {
+        messages.sort((a, b) => (parseInt(a.content ) <= parseInt(b.content)) ? 1 : -1);
+        lastMessageId = messages[0].id;
+    } else if (existingData) {
+        lastMessageId = existingData.lastMessage;
+    }
+
+    await writeLastLeaderboardAndMessage(leaderboard, lastMessageId);
 
     return await buildLeaderboardEmbed(leaderboard);
 }
@@ -60,4 +83,31 @@ const buildLeaderboardEmbed = async function(leaderboard) {
             { name: 'Value', value: values, inline: true },
         )
         .setTimestamp();
+}
+
+const getLastLeaderboardAndMessage = async function() {
+    let data = {};
+
+    try {
+        console.log('Reading leaderboard data from file...');
+        data = await fs.readFile(leaderboardFileLocation);
+    } catch (err) {
+        console.log('Error retreiving existing data or it doesn\'t exist');
+        console.log(err);
+        return null;
+    }
+
+    return JSON.parse(data);
+}
+
+const writeLastLeaderboardAndMessage = async function(leaderboard, messageId) {
+    const data = { leaderboard: leaderboard, lastMessage: messageId };
+
+    try {
+        console.log('Writing leaderboard info to file...');
+        await fs.writeFile(leaderboardFileLocation, JSON.stringify(data));
+    } catch (err) {
+        console.log('Error writing leaderboard and messages to output file');
+        console.log(err);
+    }
 }

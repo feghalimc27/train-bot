@@ -27,10 +27,6 @@ client.on(Events.InteractionCreate, async interaction => {
 		return;
 	}
 
-	if (interaction.commandName == 'count' && interaction.options.getString('option') == 'leaderboard') {
-
-	}
-
 	try {
 		await command.execute(interaction);
 	} catch (error) {

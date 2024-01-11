@@ -1,8 +1,7 @@
-const countingChannelId = process.env.COUNTING_CHANNEL_ID
 const messagePageSize = 100;
 
-export const getAllMessages = async function (client, lastMessage = null) {
-    const channel = client.channels.cache.get(countingChannelId);
+export const getAllMessages = async function (client, channelId, lastMessage = null) {
+    const channel = client.channels.cache.get(channelId);
     let messages = [];
 
     // Create message pointer
@@ -27,7 +26,7 @@ export const getAllMessages = async function (client, lastMessage = null) {
         let message = await channel.messages
             .fetch({ limit: 1, after: lastMessage })
             .then(messagePage => (messagePage.size === 1 ? messagePage.at(0) : null));
-        
+
         if (message) {
             messages.push(message);
         }
@@ -43,6 +42,16 @@ export const getAllMessages = async function (client, lastMessage = null) {
                 });
         }
     }
+
+    return messages;
+}
+
+export const getPinnedMessages = async function (client, channelId) {
+    const channel = client.channels.cache.get(channelId);
+    let messages = [];
+
+    await channel.messages.fetchPinned()
+        .then(messageMap => { messageMap.forEach(message => messages.push(message)); });
 
     return messages;
 }

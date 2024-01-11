@@ -1,8 +1,9 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { getAllMessages } from '../../utils.mjs';
+import { getAllMessages, getPinnedMessages } from '../../utils.mjs';
 import * as fs from 'fs/promises';
 
 const leaderboardFileLocation = './leaderboard.json';
+const countingChannelId = process.env.COUNTING_CHANNEL_ID
 
 export const command = {
     data: new SlashCommandBuilder()
@@ -14,11 +15,17 @@ export const command = {
                 .setDescription('option')
                 .setRequired(true)
                 .addChoices({ name: 'Leaderboard', value: 'leaderboard' })
+                .addChoices({ name: 'Pins', value: 'pins' })
         ),
     async execute(interaction) {
         // Defer reply, need client so will be getting results from main function
         await interaction.deferReply();
-        let embed = await getLeaderboard(interaction.client)
+        let embed = '';
+        if (interaction.options.getString('option') == 'leaderboard') {
+            embed = await getLeaderboard(interaction.client);
+        } else if (interaction.options.getString('option') == 'pins') {
+            embed = await getPinsLeaderboard(interaction.client);
+        }
         await interaction.editReply({ embeds: [embed] });
     },
 }
@@ -31,11 +38,35 @@ const getLeaderboard = async function(client) {
     // Get existing data if possible
     if (existingData) {
         leaderboard = existingData.leaderboard;
-        messages = await getAllMessages(client, existingData.lastMessage);
+        messages = await getAllMessages(client, countingChannelId, existingData.lastMessage);
     } else {
-        messages = await getAllMessages(client);
+        messages = await getAllMessages(client, countingChannelId);
     }
 
+    leaderboard = await sortMessagesIntoLeaderboard(messages, leaderboard);
+
+    let lastMessageId = 0;
+
+    if (messages.length > 0) {
+        messages.sort((a, b) => (parseInt(a.content ) <= parseInt(b.content)) ? 1 : -1);
+        lastMessageId = messages[0].id;
+    } else if (existingData) {
+        lastMessageId = existingData.lastMessage;
+    }
+
+    await writeLastLeaderboardAndMessage(leaderboard, lastMessageId);
+
+    return await buildLeaderboardEmbed(leaderboard, 'leaderboard');
+}
+
+const getPinsLeaderboard = async function(client) {
+    let messages = await getPinnedMessages(client, countingChannelId);
+    let leaderboard = await sortMessagesIntoLeaderboard(messages, []);
+
+    return await buildLeaderboardEmbed(leaderboard, 'pins')
+}
+
+const sortMessagesIntoLeaderboard = async function(messages, leaderboard) {
     for (let message of messages) {
         if (!leaderboard.find(element => element.id == message.author.id)) {
             leaderboard.push({ 
@@ -51,33 +82,34 @@ const getLeaderboard = async function(client) {
 
     leaderboard.sort((a, b) => (a.value <= b.value) ? 1 : -1);
 
-    let lastMessageId = 0;
-
-    if (messages.length > 0) {
-        messages.sort((a, b) => (parseInt(a.content ) <= parseInt(b.content)) ? 1 : -1);
-        lastMessageId = messages[0].id;
-    } else if (existingData) {
-        lastMessageId = existingData.lastMessage;
-    }
-
-    await writeLastLeaderboardAndMessage(leaderboard, lastMessageId);
-
-    return await buildLeaderboardEmbed(leaderboard);
+    return leaderboard;
 }
 
-const buildLeaderboardEmbed = async function(leaderboard) {
+const buildLeaderboardEmbed = async function(leaderboard, type) {
     // build columns
     let leaders = ``;
     let values = ``;
+    let title = ``;
 
     for (let index = 1; index <= leaderboard.length; index++) {
-        leaders += `${index}: ${leaderboard[index - 1].name}\n`;
+        leaders += `**${index}**: ${leaderboard[index - 1].name}\n`;
         values += `${leaderboard[index - 1].value}\n`;
+    }
+
+    switch (type) {
+        case 'leaderboard':
+            title = 'Counting Leaders';
+            break;
+        case 'pins':
+            title = 'Pin Leaders';
+            break;
+        default:
+            title = 'Leaderboard';
     }
 
     return new EmbedBuilder()
         .setColor(0x0099FF)
-        .setTitle('Counting Leaders')
+        .setTitle(title)
         .addFields(
             { name: 'User', value: leaders, inline: true },
             { name: 'Value', value: values, inline: true },

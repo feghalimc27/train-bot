@@ -28,6 +28,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 
 	try {
+		console.log(`Executing application command ${interaction.commandName} invoked by ${interaction.user.username} at ${new Date()}`);
 		await command.execute(interaction);
 	} catch (error) {
 		console.error(error);

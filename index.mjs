@@ -19,7 +19,7 @@ client.commands = await exportCommands();
 
 // Log interactions
 client.on(Events.InteractionCreate, async interaction => {
-	if (!interaction.isChatInputCommand()) return;
+	if (!interaction.isChatInputCommand() && !interaction.isMessageContextMenuCommand()) return;
 	const command = interaction.client.commands.get(interaction.commandName);
 
 	if (!command) {

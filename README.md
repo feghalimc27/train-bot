@@ -1,2 +1,2 @@
 # train-bot
-A discord bot for the anti train train weeb discord server
+A discord bot for the train discord server

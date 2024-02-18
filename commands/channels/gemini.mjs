@@ -5,7 +5,7 @@ import { VertexAI } from '@google-cloud/vertexai';
 const gcpProjectId = process.env.GCP_PROJECT_ID;
 const gcpRegion = process.env.GCP_REGION;
 const defaultModel = process.env.GEMINI_MODEL_DEFAULT;
-const maxPromptLengthLimit = process.env.GEMINI_MAX_PROMPT_LENGTH_LIMIT;
+const maxPromptLength = process.env.GEMINI_MAX_PROMPT_LENGTH;
 const maxOutputTokens = process.env.GEMINI_MAX_OUTPUT_TOKENS;
 
 var geminiChatSession = null;
@@ -19,7 +19,7 @@ export const command = {
                 .setName('prompt')
                 .setDescription('The message to prompt Gemini with.')
                 .setRequired(true)
-                .setMaxLength(maxPromptLengthLimit))
+                .setMaxLength(maxPromptLength))
         .addBooleanOption(option =>
             option
                 .setName('new')

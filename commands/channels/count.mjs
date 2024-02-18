@@ -29,7 +29,8 @@ export const command = {
                 embed = await getPinsLeaderboard(interaction.client);
                 break;
             case 'clean':
-                embed = await cleanMessages(interaction.client);
+                let commit = interaction.options.getBoolean('commit') ?? false;
+                embed = await cleanMessages(interaction.client, commit);
                 break;
         }
         await interaction.editReply({ embeds: [embed] });
@@ -72,6 +73,50 @@ const getPinsLeaderboard = async function(client) {
     return await buildLeaderboardEmbed(leaderboard, 'pins')
 }
 
+const cleanMessages = async function(client, commit) {
+    messages = await getAllMessages(client, countingChannelId);
+    if (messages.length <= 1) { return 'too few messages to clean'; }
+    messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+    // Find first valid integer message.
+    j = 0;
+    while(parseInt(messages[j].content) === null && j < messages.length) {
+        console.log(`Warning: Skipping message ${messages[j].id} that isn't an integer.`)
+        j += 1;
+    }
+
+    mistakes = [];
+    lastValidVal = parseInt(messages[j].content);
+    for (let i = j; i < messages.length; i++) {
+        val = parseInt(messages[i].content);
+        if (val === null) {
+            console.log(`Warning: Skipping message ${messages[i].id} that isn't an integer.`)
+            continue;
+        }
+        if (val != lastValidVal+1) {
+            mistakes.push(messages[i]);
+        } else {
+            lastValidVal = val;
+        }
+    }
+
+    shameBoard = sortMessagesIntoLeaderboard(mistakes, []);
+    for (let i = 0; i < mistakes.length; i++) {
+        if (commit) {
+            try {
+                console.log(`Deleting message ${mistakes[i].id}...`);
+                await mistakes[i].delete();
+            } catch(err) {  // continue removing other mistakes on single failures
+                console.log(err);
+            }
+        } else {
+            console.log(`Message ${mistakes[i].id} is invalid.`)
+        }
+    }
+
+    return buildLeaderboardEmbed(shameBoard, 'clean', {name: 'Messages Cleaned', value: commit});
+}
+
 const sortMessagesIntoLeaderboard = async function(messages, leaderboard) {
     for (let message of messages) {
         if (!leaderboard.find(element => element.id == message.author.id)) {
@@ -91,7 +136,7 @@ const sortMessagesIntoLeaderboard = async function(messages, leaderboard) {
     return leaderboard;
 }
 
-const buildLeaderboardEmbed = async function(leaderboard, type) {
+const buildLeaderboardEmbed = async function(leaderboard, type, additionalFields={}) {
     // build columns
     let leaders = ``;
     let values = ``;
@@ -109,11 +154,14 @@ const buildLeaderboardEmbed = async function(leaderboard, type) {
         case 'pins':
             title = 'Pin Leaders';
             break;
+        case 'clean':
+            title = 'Mistake Leaders';
+            break;
         default:
             title = 'Leaderboard';
     }
 
-    return new EmbedBuilder()
+    var embedBuilder = new EmbedBuilder()
         .setColor(0x0099FF)
         .setTitle(title)
         .addFields(
@@ -121,6 +169,12 @@ const buildLeaderboardEmbed = async function(leaderboard, type) {
             { name: 'Value', value: values, inline: true },
         )
         .setTimestamp();
+
+    for (const [name, value] of Object.entries(additionalFields)) {
+        embedBuilder.addFields({name: name, value: value});
+    }
+
+    return embedBuilder;
 }
 
 const getLastLeaderboardAndMessage = async function() {
@@ -148,9 +202,4 @@ const writeLastLeaderboardAndMessage = async function(leaderboard, messageId) {
         console.log('Error writing leaderboard and messages to output file');
         console.log(err);
     }
-}
-
-const cleanMessages = async function(client) {
-    messages = await getAllMessages(client, countingChannelId);
-
 }

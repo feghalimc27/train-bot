@@ -28,7 +28,7 @@ export const command = {
         .addStringOption(option =>
             option
                 .setName('model')
-                .setDescription('The Gemini model to use when creating a new chat session (default = gemini-pro).')
+                .setDescription(`The Gemini model to use when creating a new chat session (default = ${defaultModel}).`)
                 .setRequired(false)
                 .addChoices({ name: 'gemini-pro', value: 'gemini-pro'})),
     async execute(interaction) {
@@ -44,7 +44,7 @@ export const command = {
         const response = await geminiChatSession.sendMessage(prompt);
         var content = '';
         for (const part of response.response.candidates[0].content.parts) {
-            content.concat('\n', part);
+            content.concat('\n', part.text);
         }
         await interaction.editReply(content);
     },

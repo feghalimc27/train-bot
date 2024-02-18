@@ -9,22 +9,19 @@ export const command = {
     data: new SlashCommandBuilder()
         .setName('count')
         .setDescription('counting channel commands')
-        .addStringOption(option =>
-            option
-                .setName('option')
-                .setDescription('option')
-                .setRequired(true)
-                .addChoices({ name: 'Leaderboard', value: 'leaderboard' })
-                .addChoices({ name: 'Pins', value: 'pins' })
-        ),
+        .addSubcommand(subcommand => subcommand.setName('leaderboard'))
+        .addSubcommand(subcommand => subcommand.setName('pins')),
     async execute(interaction) {
         // Defer reply, need client so will be getting results from main function
         await interaction.deferReply();
         let embed = '';
-        if (interaction.options.getString('option') == 'leaderboard') {
-            embed = await getLeaderboard(interaction.client);
-        } else if (interaction.options.getString('option') == 'pins') {
-            embed = await getPinsLeaderboard(interaction.client);
+        switch(interaction.options.getSubcommand()) {
+            case 'leaderboard':
+                embed = await getLeaderboard(interaction.client);
+                break;
+            case 'pins':
+                embed = await getPinsLeaderboard(interaction.client);
+                break;
         }
         await interaction.editReply({ embeds: [embed] });
     },

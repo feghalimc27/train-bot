@@ -114,7 +114,13 @@ const cleanMessages = async function(client, commit) {
         }
     }
 
-    return buildLeaderboardEmbed(shameBoard, 'clean', {name: 'Messages Cleaned', value: commit});
+    return buildLeaderboardEmbed(
+        shameBoard, 
+        'clean', 
+        [
+            {name: 'Mistakes Deleted', value: commit},
+            {name: ''}
+        ]);
 }
 
 const sortMessagesIntoLeaderboard = async function(messages, leaderboard) {
@@ -136,10 +142,15 @@ const sortMessagesIntoLeaderboard = async function(messages, leaderboard) {
     return leaderboard;
 }
 
-const buildLeaderboardEmbed = async function(leaderboard, type, additionalFields={}) {
+const buildLeaderboardEmbed = async function(leaderboard, type, additionalFields=[]) {
+    let total = 0;
+    for (let i = 0; i < leaderboard.length; i++) {
+        total += leaderboard[i].value
+    }
+    
     // build columns
-    let leaders = ``;
-    let values = ``;
+    let leaders = `**Total**: \n`;
+    let values = `${total}\n`;
     let title = ``;
 
     for (let index = 1; index <= leaderboard.length; index++) {
@@ -161,20 +172,15 @@ const buildLeaderboardEmbed = async function(leaderboard, type, additionalFields
             title = 'Leaderboard';
     }
 
-    var embedBuilder = new EmbedBuilder()
+    return new EmbedBuilder()
         .setColor(0x0099FF)
         .setTitle(title)
         .addFields(
             { name: 'User', value: leaders, inline: true },
             { name: 'Value', value: values, inline: true },
         )
+        .addFields(additionalFields)
         .setTimestamp();
-
-    for (const [name, value] of Object.entries(additionalFields)) {
-        embedBuilder.addFields({name: name, value: value});
-    }
-
-    return embedBuilder;
 }
 
 const getLastLeaderboardAndMessage = async function() {

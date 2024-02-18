@@ -10,7 +10,13 @@ export const command = {
         .setName('count')
         .setDescription('counting channel commands')
         .addSubcommand(subcommand => subcommand.setName('leaderboard'))
-        .addSubcommand(subcommand => subcommand.setName('pins')),
+        .addSubcommand(subcommand => subcommand.setName('pins'))
+        .addSubcommand(subcommand => subcommand.setName('clean')
+            .addBooleanOption(option => 
+                option
+                    .setName('commit')
+                    .setRequired(false)
+                    .setDescription('Prints messages to remove when false. Deletes those messages when true.'))),
     async execute(interaction) {
         // Defer reply, need client so will be getting results from main function
         await interaction.deferReply();
@@ -21,6 +27,9 @@ export const command = {
                 break;
             case 'pins':
                 embed = await getPinsLeaderboard(interaction.client);
+                break;
+            case 'clean':
+                embed = await cleanMessages(interaction.client);
                 break;
         }
         await interaction.editReply({ embeds: [embed] });
@@ -139,4 +148,9 @@ const writeLastLeaderboardAndMessage = async function(leaderboard, messageId) {
         console.log('Error writing leaderboard and messages to output file');
         console.log(err);
     }
+}
+
+const cleanMessages = async function(client) {
+    messages = await getAllMessages(client, countingChannelId);
+
 }

@@ -44,6 +44,11 @@ jobs:
         echo COUNTING_CHANNEL_ID=${{ secrets.ENV_COUNTING_CHANNEL_ID }} >> .env
         echo PIN_CHANNEL_ID=${{ secrets.ENV_PIN_CHANNEL_ID }} >> .env
         echo GUILD_ID=${{ secrets.ENV_GUILD_ID }} >> .env
+        echo GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID_GEMINI }} >> .env
+        echo GCP_REGION=${{ vars.GCP_REGION_GEMINI }} >> .env
+        echo GEMINI_MODEL_DEFAULT=${{ vars.GCP_GEMINI_MODEL }} >> .env
+        echo GEMINI_MAX_PROMPT_LENGTH_LIMIT=${{ vars.GCP_GEMINI_MAX_PROMPT }} >> .env
+        echo GEMINI_MAX_OUTPUT_TOKENS=${{ vars.GCP_GEMINI_MAX_OUTPUT }} >>.env
 
         ls -la .
 

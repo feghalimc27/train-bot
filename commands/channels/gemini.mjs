@@ -5,8 +5,8 @@ import { VertexAI } from '@google-cloud/vertexai';
 const gcpProjectId = process.env.GCP_PROJECT_ID;
 const gcpRegion = process.env.GCP_REGION;
 const defaultModel = process.env.GEMINI_MODEL_DEFAULT;
-const maxPromptLength = process.env.GEMINI_MAX_PROMPT_LENGTH;
-const maxOutputTokens = process.env.GEMINI_MAX_OUTPUT_TOKENS;
+const maxPromptLength = Number(process.env.GEMINI_MAX_PROMPT_LENGTH);
+const maxOutputTokens = Number(process.env.GEMINI_MAX_OUTPUT_TOKENS);
 
 var geminiChatSession = null;
 
@@ -30,7 +30,7 @@ export const command = {
                 .setName('model')
                 .setDescription(`The Gemini model to use when creating a new chat session (default = ${defaultModel}).`)
                 .setRequired(false)
-                .addChoices({ name: 'gemini-pro', value: 'gemini-pro'})),
+                .addChoices({ name: 'gemini-1.0-pro', value: 'gemini-1.0-pro'})),
     async execute(interaction) {
         const prompt = interaction.options.getString('prompt');
         const newChat = interaction.options.getBoolean('new');

@@ -52,6 +52,7 @@ export const command = {
 
 const startChat = function(modelName) {
     const auth = new GoogleAuth({
+        keyFile: '/bot/.credentials.json',
         scopes: 'https://www.googleapis.com/auth/cloud-platform',
     });
     const vertexAI = new VertexAI({

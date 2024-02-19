@@ -34,7 +34,7 @@ jobs:
         password: '${{ steps.auth.outputs.access_token }}'
         registry: '${{ env.GAR_LOCATION }}-docker.pkg.dev'
 
-    - name: Create .env file
+    - name: Create .env file        
       run: |-
         touch .env
 
@@ -50,11 +50,15 @@ jobs:
         echo GEMINI_MAX_PROMPT_LENGTH=${{ vars.GCP_GEMINI_MAX_PROMPT }} >> .env
         echo GEMINI_MAX_OUTPUT_TOKENS=${{ vars.GCP_GEMINI_MAX_OUTPUT }} >> .env
 
-        touch .credentials.json
-
-        echo ${{ secrets.GCP_SERVICE_ACCOUNT }} >> .credentials.json
-
         ls -la .
+
+    - name: Create credentials file
+      run: |-
+        touch .credentials.json
+        echo $CREDENTIALS_JSON >> .credentials.json
+        ls -la .
+      env:
+        CREDENTIALS_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
     - name: Build and push the Docker image
       run: |-

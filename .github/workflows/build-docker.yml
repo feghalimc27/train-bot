@@ -52,14 +52,6 @@ jobs:
 
         ls -la .
 
-    - name: Create credentials file
-      run: |-
-        touch .credentials.json
-        echo $CREDENTIALS_JSON >> .credentials.json
-        ls -la .
-      env:
-        CREDENTIALS_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-
     - name: Build and push the Docker image
       run: |-
         docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-images/${{ env.SERVICE }}" .

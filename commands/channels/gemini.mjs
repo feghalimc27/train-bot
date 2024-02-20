@@ -33,6 +33,7 @@ export const command = {
                 .addChoices({ name: 'gemini-1.0-pro', value: 'gemini-1.0-pro'})),
     async execute(interaction) {
         const prompt = interaction.options.getString('prompt');
+        console.log('Prompt Response: ' + prompt);
         const newChat = interaction.options.getBoolean('new');
         const model = interaction.options.getString('model') ?? defaultModel;
 
@@ -42,10 +43,12 @@ export const command = {
         }
 
         const response = await geminiChatSession.sendMessage(prompt);
+        console.log('Gemini Response: ' + response);
         var content = '';
         for (const part of response.response.candidates[0].content.parts) {
             content.concat('\n', part.text);
         }
+        console.log('Content Object: ' + content);
         await interaction.editReply(content);
     },
 }

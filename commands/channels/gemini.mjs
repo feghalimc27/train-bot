@@ -55,8 +55,7 @@ export const command = {
             .setColor(0x0099FF)
             .setTitle(prompt)
             .setDescription(content)
-            .setAuthor({name: interaction.user.username})
-            .setFooter({text: `Chat ID: ${geminiChatId}`})
+            .setFooter({text: `Chat ID: ${geminiChatId}`});
 
         await interaction.editReply({embeds: [embedResponse]});
     },

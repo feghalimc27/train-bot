@@ -43,10 +43,10 @@ export const command = {
         }
 
         const response = await geminiChatSession.sendMessage(prompt);
-        console.log('Gemini Response: ' + response);
+        console.log('Gemini Response: ' + JSON.stringify(response));
         var content = '';
         for (const part of response.response.candidates[0].content.parts) {
-            content.concat('\n', part.text);
+            content = content.concat('\n', part.text);
         }
         console.log('Content Object: ' + content);
         await interaction.editReply(content);

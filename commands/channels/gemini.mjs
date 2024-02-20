@@ -46,7 +46,7 @@ export const command = {
         console.log('Gemini Response: ' + response);
         var content = '';
         for (const part of response.response.candidates[0].content.parts) {
-            content.concat('\n', part.text);
+            content = content.concat('\n', part.text);
         }
         console.log('Content Object: ' + content);
         await interaction.editReply(content);

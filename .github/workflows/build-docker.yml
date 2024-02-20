@@ -34,7 +34,7 @@ jobs:
         password: '${{ steps.auth.outputs.access_token }}'
         registry: '${{ env.GAR_LOCATION }}-docker.pkg.dev'
 
-    - name: Create .env file
+    - name: Create .env file        
       run: |-
         touch .env
 
@@ -48,7 +48,7 @@ jobs:
         echo GCP_REGION=${{ vars.GCP_REGION_GEMINI }} >> .env
         echo GEMINI_MODEL_DEFAULT=${{ vars.GCP_GEMINI_MODEL }} >> .env
         echo GEMINI_MAX_PROMPT_LENGTH=${{ vars.GCP_GEMINI_MAX_PROMPT }} >> .env
-        echo GEMINI_MAX_OUTPUT_TOKENS=${{ vars.GCP_GEMINI_MAX_OUTPUT }} >>.env
+        echo GEMINI_MAX_OUTPUT_TOKENS=${{ vars.GCP_GEMINI_MAX_OUTPUT }} >> .env
 
         ls -la .
 

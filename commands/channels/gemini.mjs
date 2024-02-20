@@ -45,12 +45,12 @@ export const command = {
         }
 
         const response = await geminiChatSession.sendMessage(prompt);
-        var content = '';
+        let content = '';
         for (const part of response.response.candidates[0].content.parts) {
             content = content.concat('\n', part.text);
         }
         console.log('Gemini Response: ' + content);
-        embedResponse = new EmbedBuilder()
+        let embedResponse = new EmbedBuilder()
             .setColor(0x0099FF)
             .addFields(
                 {name: `${interaction.user.username}`, value: prompt},

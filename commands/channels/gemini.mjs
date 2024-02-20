@@ -50,16 +50,14 @@ export const command = {
             content = content.concat('\n', part.text);
         }
         console.log('Gemini Response: ' + JSON.stringify(content));
-        embedResponse = new EmbedBuilder()
+        let embedResponse = new EmbedBuilder()
             .setColor(0x0099FF)
-            .addFields(
-                {name: `${interaction.user.username}`, value: prompt},
-                {name: 'Gemini', value: content}
-            )
+            .setTitle(prompt)
+            .setDescription(content)
+            .setAuthor({name: interaction.user.username})
             .setFooter({text: `Chat ID: ${geminiChatId}`})
 
-
-        await interaction.editReply(embedResponse);
+        await interaction.editReply({embeds: [embedResponse]});
     },
 }
 

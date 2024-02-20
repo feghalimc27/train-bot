@@ -49,7 +49,7 @@ export const command = {
         for (const part of response.response.candidates[0].content.parts) {
             content = content.concat('\n', part.text);
         }
-        console.log('Gemini Response: ' + JSON.stringify(content));
+        console.log('Gemini Response: ' + content);
         embedResponse = new EmbedBuilder()
             .setColor(0x0099FF)
             .addFields(

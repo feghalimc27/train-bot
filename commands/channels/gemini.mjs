@@ -11,6 +11,7 @@ const maxOutputTokens = Number(process.env.GEMINI_MAX_OUTPUT_TOKENS);
 const maxIdLength = 25;
 
 var chatSessions = {};
+var lastUserSessions = {};
 
 export const command = {
     data: new SlashCommandBuilder()
@@ -33,7 +34,7 @@ export const command = {
                 .setName('model')
                 .setDescription(`The Gemini model of the new chat session (default = ${defaultModel}).`)
                 .setRequired(false)
-                .addChoices({name: 'gemini-1.0-pro-vision', value: 'gemini-1.0-pro-vision'}))
+                .addChoices({name: 'gemini-1.0-pro', value: 'gemini-1.0-pro'}))
         .addBooleanOption(option =>
             option
                 .setName('reset')
@@ -42,11 +43,11 @@ export const command = {
     async execute(interaction) {
         await interaction.deferReply();
 
-        let prompt = interaction.options.getString('prompt');
-        console.log('Gemini Prompt: ' + prompt);
-        let id = interaction.options.getString('id') ?? defaultChatId;
+        let id = getChatId(interaction.user.username);
         let model = interaction.options.getString('model') ?? defaultModel;
         let reset = interaction.options.getBoolean('reset') ?? false;
+        let prompt = interaction.options.getString('prompt');
+        console.log('Gemini Prompt: ' + prompt);        
 
         if (!(id in chatSessions) || reset) {
             chatSessions[id] = {session: startChat(model), model: model};
@@ -63,10 +64,25 @@ export const command = {
             .setColor(0x0099FF)
             .setTitle(prompt)
             .setDescription(content)
-            .setFooter({text: `Chat ID: ${id}, Model: ${chatSessions[id]['model']}`});
+            .setFooter({text: `Chat ID: ${id}  Model: ${chatSessions[id]['model']}`});
 
         await interaction.editReply({embeds: [embedResponse]});
     },
+}
+
+const getChatId = function(user) {
+    let id = interaction.options.getString('id') ?? '';
+    if (id !== ''){
+        lastUserSessions[user] = id;
+        return id;
+    }
+
+    if (user in lastUserSessions) {
+        return lastUserSessions[user];
+    }
+
+    lastUserSessions[user] = defaultChatId;
+    return defaultChatId
 }
 
 const startChat = function(modelName) {

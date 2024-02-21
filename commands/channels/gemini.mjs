@@ -5,11 +5,12 @@ import { VertexAI } from '@google-cloud/vertexai';
 const gcpProjectId = process.env.GCP_PROJECT_ID;
 const gcpRegion = process.env.GCP_REGION;
 const defaultModel = process.env.GEMINI_MODEL_DEFAULT;
+const defaultChatId = 'main';
 const maxPromptLength = Number(process.env.GEMINI_MAX_PROMPT_LENGTH);
 const maxOutputTokens = Number(process.env.GEMINI_MAX_OUTPUT_TOKENS);
+const maxIdLength = 25;
 
-var geminiChatId = null;
-var geminiChatSession = null;
+var chatSessions = {};
 
 export const command = {
     data: new SlashCommandBuilder()
@@ -18,33 +19,40 @@ export const command = {
         .addStringOption(option =>
             option
                 .setName('prompt')
-                .setDescription('The message to prompt Gemini with.')
+                .setDescription('The prompt message.')
                 .setRequired(true)
                 .setMaxLength(maxPromptLength))
-        .addBooleanOption(option =>
+        .addStringOption(option =>
             option
-                .setName('new')
-                .setDescription('Creates a new chat session. Replaces any existing chat session.')
-                .setRequired(false))
+                .setName('id')
+                .setDescription(`The target chat session ID (default = ${defaultChatId}).`)
+                .setRequired(false)
+                .setMaxLength(maxIdLength))
         .addStringOption(option =>
             option
                 .setName('model')
-                .setDescription(`The Gemini model to use when creating a new chat session (default = ${defaultModel}).`)
+                .setDescription(`The Gemini model of the new chat session (default = ${defaultModel}).`)
                 .setRequired(false)
-                .addChoices({ name: 'gemini-1.0-pro', value: 'gemini-1.0-pro'})),
+                .addChoices({name: 'gemini-1.0-pro-vision', value: 'gemini-1.0-pro-vision'}))
+        .addBooleanOption(option =>
+            option
+                .setName('reset')
+                .setDescription('Reset the given chat session (default = false).')
+                .setRequired(false)),
     async execute(interaction) {
-        const prompt = interaction.options.getString('prompt');
-        console.log('Gemini Prompt: ' + prompt);
-        const newChat = interaction.options.getBoolean('new');
-        const model = interaction.options.getString('model') ?? defaultModel;
-
         await interaction.deferReply();
-        if (geminiChatSession === null || newChat) {
-            geminiChatId = genPseudoRandomString(10);
-            geminiChatSession = startChat(model);
+
+        let prompt = interaction.options.getString('prompt');
+        console.log('Gemini Prompt: ' + prompt);
+        let id = interaction.options.getString('id') ?? defaultChatId;
+        let model = interaction.options.getString('model') ?? defaultModel;
+        let reset = interaction.options.getBoolean('reset') ?? false;
+
+        if (!(id in chatSessions) || reset) {
+            chatSessions[id] = {session: startChat(model), model: model};
         }
 
-        const response = await geminiChatSession.sendMessage(prompt);
+        const response = await chatSessions[id]['session'].sendMessage(prompt);
         let content = '';
         for (const part of response.response.candidates[0].content.parts) {
             content = content.concat('\n', part.text);
@@ -55,7 +63,7 @@ export const command = {
             .setColor(0x0099FF)
             .setTitle(prompt)
             .setDescription(content)
-            .setFooter({text: `Chat ID: ${geminiChatId}`});
+            .setFooter({text: `Chat ID: ${id}, Model: ${chatSessions[id]['model']}`});
 
         await interaction.editReply({embeds: [embedResponse]});
     },
@@ -76,15 +84,3 @@ const startChat = function(modelName) {
     });
     return generativeModel.startChat({});
 };
-
-const genPseudoRandomString = function(length) {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-    let counter = 0;
-    while (counter < length) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        counter += 1;
-    }
-    return result;
-}

@@ -73,6 +73,7 @@ export const command = {
 const getChatId = function(interaction) {
     let id = interaction.options.getString('id') ?? '';
     let user = interaction.user.username;
+
     if (id !== ''){
         lastUserSessions[user] = id;
         return id;

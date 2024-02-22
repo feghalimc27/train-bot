@@ -63,7 +63,7 @@ export const command = {
         let response = new EmbedBuilder().setTitle('Invalid Command. Try again.');
         switch(command) {
             case 'chat':
-                response = chatCommand(interaction);
+                response = await chatCommand(interaction);
                 break;
             case 'list':
                 response = listCommand();
@@ -136,7 +136,7 @@ const chatCommand = async function(interaction) {
 
 const listCommand = function() {
     let sessions = '';
-    for (session in chatSessions) {
+    for (const session of chatSessions) {
         sessions += `${session}\n`;
     }
 

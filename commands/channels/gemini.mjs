@@ -135,14 +135,14 @@ const chatCommand = async function(interaction) {
 }
 
 const listCommand = function() {
-    let sessions = '';
-    for (const session of chatSessions) {
-        sessions += `${session}\n`;
+    let chatIds = '';
+    for (const [id, sessions] of Object.entries(chatSessions)) {
+        chatIds += `${id}\n`;
     }
 
     return new EmbedBuilder()
         .setTitle('Open Chat Sessions')
-        .setDescription(sessions);
+        .setDescription(chatIds);
 }
 
 const currentCommand = function(user) {

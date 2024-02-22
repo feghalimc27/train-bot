@@ -136,7 +136,7 @@ const chatCommand = async function(interaction) {
 
 const listCommand = function() {
     let sessions = '';
-    for (const session in chatSessions) {
+    for (const session of chatSessions) {
         sessions += `${session}\n`;
     }
 

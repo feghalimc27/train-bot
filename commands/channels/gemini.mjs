@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder, Embed } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 import { GoogleAuth } from 'google-auth-library';
 import { VertexAI } from '@google-cloud/vertexai';
 

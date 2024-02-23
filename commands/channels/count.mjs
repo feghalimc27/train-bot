@@ -101,16 +101,19 @@ const cleanMessages = async function(client, commit) {
     }
 
     shameBoard = sortMessagesIntoLeaderboard(mistakes, []);
-    for (let i = 0; i < mistakes.length; i++) {
-        if (commit) {
-            try {
-                console.log(`Deleting message ${mistakes[i].id}...`);
-                await mistakes[i].delete();
-            } catch(err) {  // continue removing other mistakes on single failures
-                console.log(err);
+    if (commit) {
+        try {
+            await fs.unlink(leaderboardFileLocation);
+            for (let i = 0; i < mistakes.length; i++) {
+                    console.log(`Deleting message ${mistakes[i].id}...`);
+                    await mistakes[i].delete();
             }
-        } else {
-            console.log(`Message ${mistakes[i].id} is invalid.`)
+        } catch(err) {
+            console.log(err);
+        }
+    } else {
+        for (let i = 0; i < mistakes.length; i++) {
+            console.log(`Mistake found in message ${mistakes[i].id}...`);
         }
     }
 

@@ -93,7 +93,7 @@ const cleanMessages = async function(client, commit) {
 
     let mistakes = [];
     let lastValidVal = parseInt(messages[j].content);
-    for (let i = j; i < messages.length; i++) {
+    for (let i = j + 1; i < messages.length; i++) {
         let val = parseInt(messages[i].content);
         if (val === null) {
             console.log(`Warning: Skipping message ${messages[i].id} that isn't an integer.`)
@@ -106,16 +106,15 @@ const cleanMessages = async function(client, commit) {
         }
     }
 
-    let shameBoard = sortMessagesIntoLeaderboard(mistakes, []);
+    let shameBoard = await sortMessagesIntoLeaderboard(mistakes, []);
     if (commit) {
-        try {
-            await fs.unlink(leaderboardFileLocation);
-            for (let i = 0; i < mistakes.length; i++) {
-                    console.log(`Deleting message ${mistakes[i].id}...`);
-                    await mistakes[i].delete();
-            }
-        } catch(err) {
-            console.log(err);
+        fs.unlink(leaderboardFileLocation)
+            .then(() => console.log("Deleted leaderboard file..."))
+            .catch(err => console.log(err));
+        for (let i = 0; i < mistakes.length; i++) {
+            mistakes[i].delete()
+                .then(message => console.log(`Deleted message ${message.id}...`))
+                .catch(err => console.log(err));
         }
     } else {
         for (let i = 0; i < mistakes.length; i++) {

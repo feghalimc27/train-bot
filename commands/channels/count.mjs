@@ -10,8 +10,11 @@ export const command = {
         .setName('count')
         .setDescription('counting channel commands')
         .addSubcommand(subcommand => subcommand.setName('leaderboard'))
+            .setDescription('view counting leaders and counts')
         .addSubcommand(subcommand => subcommand.setName('pins'))
+            .setDescription('view pin leaders and counts')
         .addSubcommand(subcommand => subcommand.setName('clean')
+            .setDescription('clean the counting channel and shame the offenders')
             .addBooleanOption(option => 
                 option
                     .setName('commit')

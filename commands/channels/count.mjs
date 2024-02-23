@@ -122,7 +122,6 @@ const cleanMessages = async function(client, commit) {
         'clean', 
         [
             {name: 'Mistakes Deleted', value: commit},
-            {name: ''}
         ]);
 }
 

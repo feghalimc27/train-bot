@@ -9,11 +9,14 @@ export const command = {
     data: new SlashCommandBuilder()
         .setName('count')
         .setDescription('counting channel commands')
-        .addSubcommand(subcommand => subcommand.setName('leaderboard'))
-            .setDescription('view counting leaders and counts')
-        .addSubcommand(subcommand => subcommand.setName('pins'))
-            .setDescription('view pin leaders and counts')
-        .addSubcommand(subcommand => subcommand.setName('clean')
+        .addSubcommand(subcommand => subcommand
+            .setName('leaderboard')
+            .setDescription('view counting leaders and counts'))
+        .addSubcommand(subcommand => subcommand
+            .setName('pins')
+            .setDescription('view pin leaders and counts'))
+        .addSubcommand(subcommand => subcommand
+            .setName('clean')
             .setDescription('clean the counting channel and shame the offenders')
             .addBooleanOption(option => 
                 option
@@ -77,21 +80,21 @@ const getPinsLeaderboard = async function(client) {
 }
 
 const cleanMessages = async function(client, commit) {
-    messages = await getAllMessages(client, countingChannelId);
+    let messages = await getAllMessages(client, countingChannelId);
     if (messages.length <= 1) { return 'too few messages to clean'; }
     messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
     // Find first valid integer message.
-    j = 0;
+    let j = 0;
     while(parseInt(messages[j].content) === null && j < messages.length) {
         console.log(`Warning: Skipping message ${messages[j].id} that isn't an integer.`)
         j += 1;
     }
 
-    mistakes = [];
-    lastValidVal = parseInt(messages[j].content);
+    let mistakes = [];
+    let lastValidVal = parseInt(messages[j].content);
     for (let i = j; i < messages.length; i++) {
-        val = parseInt(messages[i].content);
+        let val = parseInt(messages[i].content);
         if (val === null) {
             console.log(`Warning: Skipping message ${messages[i].id} that isn't an integer.`)
             continue;
@@ -103,7 +106,7 @@ const cleanMessages = async function(client, commit) {
         }
     }
 
-    shameBoard = sortMessagesIntoLeaderboard(mistakes, []);
+    let shameBoard = sortMessagesIntoLeaderboard(mistakes, []);
     if (commit) {
         try {
             await fs.unlink(leaderboardFileLocation);
@@ -124,7 +127,7 @@ const cleanMessages = async function(client, commit) {
         shameBoard, 
         'clean', 
         [
-            {name: 'Mistakes Deleted', value: commit},
+            { name: 'Mistakes Deleted', value: commit.toString() },
         ]);
 }
 

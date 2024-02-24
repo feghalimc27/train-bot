@@ -9,6 +9,9 @@ For local development, first a .env file must be set up with the relevant enviro
 * PUBLIC_KEY: The public key for the bot
 * COUNTING_CHANNEL_ID: The ID for the channel the bot should check for counting messages
 * PIN_CHANNEL_ID: The ID for the channel to place pinned messages
+* B_CHANNEL_ID: The ID for the b channel
+* H_CHANNEL_ID: The ID for the h channel
+* OWO_CHANNEL_ID: The ID for the owo emote channel
 * GUILD_ID: The server to intialize the bot commands in. For local development this should be the server ID of the test server.
 * GCP_PROJECT_ID: The GCP project ID for the project hosting the Gemini API
 * GCP_REGION: The GCP region for the project hosting the Gemini API

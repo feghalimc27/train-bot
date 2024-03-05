@@ -29,5 +29,5 @@ jobs:
 
       - name: Restart Instance
         run: |-
-          gcloud compute instances reset train-bot-instance
+          gcloud compute instances reset train-bot-instance --zone=us-central1-a
           

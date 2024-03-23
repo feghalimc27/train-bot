@@ -1,37 +1,50 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { getAllMessages, getPinnedMessages } from '../../utils.mjs';
+import { SlashCommandBuilder } from 'discord.js';
+import { getAllMessages, getPinnedMessages, getLastLeaderboardAndMessage, writeLastLeaderboardAndMessage, buildLeaderboardEmbed, sortMessagesIntoLeaderboard } from '../../utils.mjs';
 import * as fs from 'fs/promises';
 
-const leaderboardFileLocation = './leaderboard.json';
+const leaderboardFileLocation = './count-leaderboard.json';
 const countingChannelId = process.env.COUNTING_CHANNEL_ID
 
 export const command = {
     data: new SlashCommandBuilder()
         .setName('count')
         .setDescription('counting channel commands')
-        .addStringOption(option =>
-            option
-                .setName('option')
-                .setDescription('option')
-                .setRequired(true)
-                .addChoices({ name: 'Leaderboard', value: 'leaderboard' })
-                .addChoices({ name: 'Pins', value: 'pins' })
-        ),
+        .addSubcommand(subcommand => subcommand
+            .setName('leaderboard')
+            .setDescription('view counting leaders and counts'))
+        .addSubcommand(subcommand => subcommand
+            .setName('pins')
+            .setDescription('view pin leaders and counts'))
+        .addSubcommand(subcommand => subcommand
+            .setName('clean')
+            .setDescription('clean the counting channel and shame the offenders')
+            .addBooleanOption(option => 
+                option
+                    .setName('commit')
+                    .setRequired(false)
+                    .setDescription('Prints messages to remove when false. Deletes those messages when true.'))),
     async execute(interaction) {
         // Defer reply, need client so will be getting results from main function
         await interaction.deferReply();
         let embed = '';
-        if (interaction.options.getString('option') == 'leaderboard') {
-            embed = await getLeaderboard(interaction.client);
-        } else if (interaction.options.getString('option') == 'pins') {
-            embed = await getPinsLeaderboard(interaction.client);
+        switch(interaction.options.getSubcommand()) {
+            case 'leaderboard':
+                embed = await getLeaderboard(interaction.client);
+                break;
+            case 'pins':
+                embed = await getPinsLeaderboard(interaction.client);
+                break;
+            case 'clean':
+                let commit = interaction.options.getBoolean('commit') ?? false;
+                embed = await cleanMessages(interaction.client, commit);
+                break;
         }
         await interaction.editReply({ embeds: [embed] });
     },
 }
 
 const getLeaderboard = async function(client) {
-    let existingData = await getLastLeaderboardAndMessage();
+    let existingData = await getLastLeaderboardAndMessage(leaderboardFileLocation);
     let leaderboard = [];
     let messages = [];
 
@@ -54,47 +67,70 @@ const getLeaderboard = async function(client) {
         lastMessageId = existingData.lastMessage;
     }
 
-    await writeLastLeaderboardAndMessage(leaderboard, lastMessageId);
+    await writeLastLeaderboardAndMessage(leaderboard, lastMessageId, leaderboardFileLocation);
 
-    return await buildLeaderboardEmbed(leaderboard, 'leaderboard');
+    return await getLeaderboardEmbed(leaderboard, 'leaderboard');
 }
 
 const getPinsLeaderboard = async function(client) {
     let messages = await getPinnedMessages(client, countingChannelId);
     let leaderboard = await sortMessagesIntoLeaderboard(messages, []);
 
-    return await buildLeaderboardEmbed(leaderboard, 'pins')
+    return await getLeaderboardEmbed(leaderboard, 'pins')
 }
 
-const sortMessagesIntoLeaderboard = async function(messages, leaderboard) {
-    for (let message of messages) {
-        if (!leaderboard.find(element => element.id == message.author.id)) {
-            leaderboard.push({ 
-                id: message.author.id,
-                name: message.author.username, 
-                value: 1 
-            });
+const cleanMessages = async function(client, commit) {
+    let messages = await getAllMessages(client, countingChannelId);
+    if (messages.length <= 1) { return 'too few messages to clean'; }
+    messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+    // Find first valid integer message.
+    let j = 0;
+    while(parseInt(messages[j].content) === null && j < messages.length) {
+        console.log(`Warning: Skipping message ${messages[j].id} that isn't an integer.`)
+        j += 1;
+    }
+
+    let mistakes = [];
+    let lastValidVal = parseInt(messages[j].content);
+    for (let i = j + 1; i < messages.length; i++) {
+        let val = parseInt(messages[i].content);
+        if (val === null) {
+            console.log(`Warning: Skipping message ${messages[i].id} that isn't an integer.`)
+            continue;
+        }
+        if (val != lastValidVal+1) {
+            mistakes.push(messages[i]);
         } else {
-            let index = leaderboard.findIndex(element => element.id == message.author.id);
-            leaderboard[index].value += 1;
+            lastValidVal = val;
         }
     }
 
-    leaderboard.sort((a, b) => (a.value <= b.value) ? 1 : -1);
+    let shameBoard = await sortMessagesIntoLeaderboard(mistakes, []);
+    if (commit) {
+        fs.unlink(leaderboardFileLocation)
+            .then(() => console.log("Deleted leaderboard file..."))
+            .catch(err => console.log(err));
+        for (let i = 0; i < mistakes.length; i++) {
+            mistakes[i].delete()
+                .then(message => console.log(`Deleted message ${message.id}...`))
+                .catch(err => console.log(err));
+        }
+    } else {
+        for (let i = 0; i < mistakes.length; i++) {
+            console.log(`Mistake found in message ${mistakes[i].id}...`);
+        }
+    }
 
-    return leaderboard;
+    return getLeaderboardEmbed(shameBoard, 'clean', 
+        [
+            { name: 'Mistakes Deleted', value: commit.toString() },
+        ]
+    );
 }
 
-const buildLeaderboardEmbed = async function(leaderboard, type) {
-    // build columns
-    let leaders = ``;
-    let values = ``;
-    let title = ``;
-
-    for (let index = 1; index <= leaderboard.length; index++) {
-        leaders += `**${index}**: ${leaderboard[index - 1].name}\n`;
-        values += `${leaderboard[index - 1].value}\n`;
-    }
+const getLeaderboardEmbed = async function(leaderboard, type, additionalFields=[]) {    
+    let title = '';
 
     switch (type) {
         case 'leaderboard':
@@ -103,43 +139,12 @@ const buildLeaderboardEmbed = async function(leaderboard, type) {
         case 'pins':
             title = 'Pin Leaders';
             break;
+        case 'clean':
+            title = 'Mistake Leaders';
+            break;
         default:
             title = 'Leaderboard';
     }
 
-    return new EmbedBuilder()
-        .setColor(0x0099FF)
-        .setTitle(title)
-        .addFields(
-            { name: 'User', value: leaders, inline: true },
-            { name: 'Value', value: values, inline: true },
-        )
-        .setTimestamp();
-}
-
-const getLastLeaderboardAndMessage = async function() {
-    let data = {};
-
-    try {
-        console.log('Reading leaderboard data from file...');
-        data = await fs.readFile(leaderboardFileLocation);
-    } catch (err) {
-        console.log('Error retreiving existing data or it doesn\'t exist');
-        console.log(err);
-        return null;
-    }
-
-    return JSON.parse(data);
-}
-
-const writeLastLeaderboardAndMessage = async function(leaderboard, messageId) {
-    const data = { leaderboard: leaderboard, lastMessage: messageId };
-
-    try {
-        console.log('Writing leaderboard info to file...');
-        await fs.writeFile(leaderboardFileLocation, JSON.stringify(data));
-    } catch (err) {
-        console.log('Error writing leaderboard and messages to output file');
-        console.log(err);
-    }
+    return await buildLeaderboardEmbed(leaderboard, title, additionalFields);
 }

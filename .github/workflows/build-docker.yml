@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Build Docker
 
 on:
   push:
@@ -43,6 +43,9 @@ jobs:
         echo PUBLIC_KEY=${{ secrets.ENV_DISCORD_PUBLIC_KEY }} >> .env
         echo COUNTING_CHANNEL_ID=${{ secrets.ENV_COUNTING_CHANNEL_ID }} >> .env
         echo PIN_CHANNEL_ID=${{ secrets.ENV_PIN_CHANNEL_ID }} >> .env
+        echo B_CHANNEL_ID=${{ secrets.ENV_B_CHANNEL_ID }} >> .env
+        echo H_CHANNEL_ID=${{ secrets.ENV_H_CHANNEL_ID }} >> .env
+        echo OWO_CHANNEL_ID=${{ secrets.ENV_OWO_CHANNEL_ID }} >> .env
         echo GUILD_ID=${{ secrets.ENV_GUILD_ID }} >> .env
         echo GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID_GEMINI }} >> .env
         echo GCP_REGION=${{ vars.GCP_REGION_GEMINI }} >> .env

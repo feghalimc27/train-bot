@@ -1,0 +1,33 @@
+name: Redeploy Instance
+
+on:
+  workflow_run:
+    workflows: [ "Build Docker" ]
+    branches: [ "main" ]
+    types:
+      - completed
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  SERVICE: train-bot-x86    
+
+jobs:
+  deploy:    
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+          
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          token_format: 'access_token'
+          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+
+      - name: Restart Instance
+        run: |-
+          gcloud compute instances reset ${{ secrets.GCP_INSTANCE_ID }} --zone=us-central1-a
+          
